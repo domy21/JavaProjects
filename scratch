@@ -1,0 +1,261 @@
+import React, { useState } from 'react';
+import {
+  TextField,
+  Button,
+  Container,
+  Paper,
+  Typography,
+  MenuItem,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle
+} from '@material-ui/core';
+import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
+import DateFnsUtils from '@date-io/date-fns';
+import { format, addDays, isSameDay } from 'date-fns';
+
+const PersonDetailsForm = () => {
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    gender: '',
+    birthDate: null,
+    cheatDay: null,
+    address: ''
+  });
+
+  const [cheatDayDialogOpen, setCheatDayDialogOpen] = useState(false);
+  const [availableCheatDays, setAvailableCheatDays] = useState([]);
+
+  // Generate available cheat days (next 3 Fridays from today)
+  const generateCheatDays = () => {
+    const today = new Date();
+    let nextFriday = addDays(today, (5 - today.getDay() + 7) % 7);
+    if (isSameDay(nextFriday, today)) {
+      nextFriday = addDays(nextFriday, 7);
+    }
+    
+    const days = [
+      nextFriday,
+      addDays(nextFriday, 7),
+      addDays(nextFriday, 14)
+    ];
+    
+    setAvailableCheatDays(days);
+    setCheatDayDialogOpen(true);
+  };
+
+  const handleCheatDaySelect = (date) => {
+    setFormData({ ...formData, cheatDay: date });
+    setCheatDayDialogOpen(false);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleDateChange = (date, field) => {
+    setFormData({ ...formData, [field]: date });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Form submitted:', formData);
+    // Add your form submission logic here
+  };
+
+  // Custom TextField component for DatePicker to match other fields
+  const renderDatePickerTextField = (params) => (
+    <TextField
+      {...params}
+      variant="outlined"
+      fullWidth
+      size="small"
+      style={{ marginBottom: '1rem' }}
+    />
+  );
+
+  return (
+    <Container maxWidth="sm" style={{ marginTop: '2rem' }}>
+      <Paper elevation={3} style={{ padding: '2rem' }}>
+        <Typography variant="h5" gutterBottom style={{ marginBottom: '2rem', fontWeight: 500 }}>
+          Person Details
+        </Typography>
+        
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <TextField
+              label="First Name"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              variant="outlined"
+              fullWidth
+              required
+              size="small"
+            />
+            <TextField
+              label="Last Name"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              variant="outlined"
+              fullWidth
+              required
+              size="small"
+            />
+          </div>
+          
+          <TextField
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            variant="outlined"
+            fullWidth
+            required
+            style={{ marginBottom: '1rem' }}
+            size="small"
+          />
+          
+          <TextField
+            label="Phone Number"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            variant="outlined"
+            fullWidth
+            style={{ marginBottom: '1rem' }}
+            size="small"
+          />
+          
+          <TextField
+            select
+            label="Gender"
+            name="gender"
+            value={formData.gender}
+            onChange={handleInputChange}
+            variant="outlined"
+            fullWidth
+            style={{ marginBottom: '1rem' }}
+            size="small"
+          >
+            <MenuItem value="">Select Gender</MenuItem>
+            <MenuItem value="male">Male</MenuItem>
+            <MenuItem value="female">Female</MenuItem>
+            <MenuItem value="other">Other</MenuItem>
+            <MenuItem value="prefer-not-to-say">Prefer not to say</MenuItem>
+          </TextField>
+          
+          <MuiPickersUtilsProvider utils={DateFnsUtils}>
+            <DatePicker
+              label="Birth Date"
+              value={formData.birthDate}
+              onChange={(date) => handleDateChange(date, 'birthDate')}
+              format="dd-MMM-yyyy"
+              TextFieldComponent={renderDatePickerTextField}
+            />
+          </MuiPickersUtilsProvider>
+          
+          <TextField
+            label="Preferred Cheat Day"
+            value={formData.cheatDay ? format(formData.cheatDay, 'dd-MMM-yyyy') : ''}
+            onClick={generateCheatDays}
+            variant="outlined"
+            fullWidth
+            style={{ marginBottom: '1rem' }}
+            size="small"
+            InputProps={{
+              readOnly: true,
+            }}
+          />
+          
+          <TextField
+            label="Address"
+            name="address"
+            value={formData.address}
+            onChange={handleInputChange}
+            variant="outlined"
+            fullWidth
+            multiline
+            rows={3}
+            style={{ marginBottom: '2rem' }}
+            size="small"
+          />
+          
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            fullWidth
+            size="large"
+            style={{ padding: '0.8rem', fontWeight: 500 }}
+          >
+            Submit
+          </Button>
+        </form>
+      </Paper>
+      
+      {/* Cheat Day Selection Dialog */}
+      <Dialog open={cheatDayDialogOpen} onClose={() => setCheatDayDialogOpen(false)}>
+        <DialogTitle>Select Preferred Cheat Day</DialogTitle>
+        <DialogContent>
+          <Typography variant="subtitle1" style={{ marginBottom: '1rem' }}>
+            Available cheat days:
+          </Typography>
+          {availableCheatDays.map((day, index) => (
+            <Button
+              key={index}
+              variant="outlined"
+              fullWidth
+              style={{ marginBottom: '0.5rem', textTransform: 'none' }}
+              onClick={() => handleCheatDaySelect(day)}
+            >
+              {format(day, 'EEEE, dd-MMM-yyyy')}
+            </Button>
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCheatDayDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
+  );
+};
+
+export default PersonDetailsForm;
+
+Key Improvements:
+Consistent DatePicker Styling:
+
+Created a custom renderDatePickerTextField function that ensures the DatePicker uses the exact same styling as other TextFields
+
+Matched the variant="outlined", size="small", and margin properties
+
+Ensured fullWidth behavior matches other fields
+
+Visual Harmony:
+
+All form fields now have identical styling and spacing
+
+The DatePicker is indistinguishable from regular TextFields when not active
+
+Maintains all the original functionality while looking consistent
+
+Maintained All Original Features:
+
+Birthdate still uses the DatePicker with "dd-MMM-yyyy" format
+
+Preferred cheat day still shows only 3 selectable dates
+
+All other form functionality remains unchanged
+
+This solution provides a seamless user experience where date fields blend perfectly with the rest of the form while maintaining all the specialized date selection functionality.
